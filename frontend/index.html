@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InquireAnti | PEB Strategy Agent</title>
+    <link rel="stylesheet" href="static/style.css?v=1.1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blur"></div>
+    
+    <header>
+        <div class="logo">INQUIRE<span>ANTI</span></div>
+        <div class="tagline">Advanced PEB Specification Agent</div>
+    </header>
+
+    <main>
+        <section id="upload-section" class="glass-container">
+            <h1>Automated Requirement Analysis</h1>
+            <p>Upload drawings, specs, or paste inquiry emails to begin extraction.</p>
+            
+            <div class="upload-wrapper">
+                <div id="drop-zone" class="drop-zone">
+                    <div class="icon">📤</div>
+                    <p>Drag & Drop files here or <span>Browse</span></p>
+                    <input type="file" id="file-input" hidden>
+                </div>
+                
+                <div class="divider"><span>OR</span></div>
+                
+                <textarea id="text-input" placeholder="Paste inquiry email text here..."></textarea>
+            </div>
+            
+            <div id="selection-status" class="hidden selection-badge"></div>
+            
+            <button id="analyze-btn" class="btn-primary">Analyze Specifications</button>
+        </section>
+
+        <section id="processing-section" class="glass-container hidden">
+            <div id="upload-status" class="hidden status-badge"></div>
+            <h2 id="status-title">Analyzing Infrastructure...</h2>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div class="status-steps">
+                <div class="step active" id="step-extracting">Extraction</div>
+                <div class="step" id="step-analyzing">Logic Processing</div>
+                <div class="step" id="step-finalizing">Finalizing</div>
+            </div>
+        </section>
+
+        <section id="result-section" class="glass-container hidden">
+            <div class="result-header">
+                <h2>Extracted Specifications</h2>
+                <div class="actions">
+                    <button id="edit-btn" class="btn-secondary">Edit Mode</button>
+                    <button id="generate-btn" class="btn-primary">Generate Final Excel</button>
+                </div>
+            </div>
+            
+            <div class="data-grid" id="data-display">
+                <!-- Parameters will be injected here -->
+            </div>
+            
+            <div id="download-area" class="hidden">
+                <div class="success-card">
+                    <h3>Excel Specification Ready!</h3>
+                    <a id="download-link" href="#" class="btn-download">Download .xlsx</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 InquireAnti AI. Built for PEB Precision.</p>
+    </footer>
+
+    <script src="static/script.js?v=1.1"></script>
+</body>
+</html>

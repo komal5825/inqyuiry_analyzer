@@ -1,0 +1,16 @@
+.env
+*.env
+
+__pycache__/
+*.pyc
+
+venv/
+
+*.db
+
+uploads/
+backend/uploads/
+
+*.xlsx
+*.jpg
+*.png
