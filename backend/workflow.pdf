@@ -1,0 +1,155 @@
+
+Your task is to build a complete system called:
+
+# 🧠 Inquiry Analyzer Agent:
+
+Build a fully functional AI-powered system that:
+
+1. Accepts client inputs from: Emails (with attachments), PDFs, Excel / Spreadsheets, Images (scanned docs), Word documents, Plain text
+
+2. Extracts structured data (PEB engineering parameters)
+
+3. Validates and fills missing fields using: Intelligent inference (LLM), Predefined defaults
+
+4. Stores project data
+
+5. Allows human review/edit via frontend UI
+
+6. Generates a **final Excel file** from a predefined template
+
+7. Provides downloadable output
+
+---
+
+## 🧩 SYSTEM ARCHITECTURE (STRICT)
+
+You MUST implement:
+
+### 1. AI PIPELINE (CORE LOGIC)
+
+Step 1: Input Detection:  Identify file type (pdf, image, excel, email, doc, text) ALLOWED_EXTENSIONS=pdf,docx,xlsx,xls,png,jpg,jpeg,gif,txt,eml
+
+
+Step 2: Extraction Layer: Image / scanned PDF → PaddleOCR or Qwen2.5-VL,  Text PDF → pdfplumber,  DOC/Excel → appropriate parser
+
+Step 3: Intelligence Layer:  Use LLM (LLaMA 3 or Qwen2.5-VL), Convert extracted text → structured JSON
+
+Step 4: Default Handling: Fill missing values using: predefined defaults, inference logic
+
+Step 5: Validation Engine: Validate units, ranges, completeness
+
+Step 6: Storage :   Store in database sql
+                      
+Step 7: Excel Generation: Map structured JSON → Excel template using pandas/openpyxl
+
+### REQUIRED FEATURES
+
+* Async file processing
+* Task queue for extraction
+* API-first design
+* Logging & error handling
+* Modular services
+
+### API ENDPOINTS (IMPLEMENT EXACTLY)
+
+1. POST /api/requirements/extract
+2. GET /api/requirements/{task_id}/status
+3. GET /api/projects/{project_id}
+4. PUT /api/projects/{project_id}/parameters
+5. POST /api/projects/{project_id}/generate-excel
+6. GET /api/files/{file_id}/download
+
+Follow request/response formats EXACTLY as provided.
+
+---
+
+## 🗂 BACKEND FOLDER STRUCTURE (STRICT)
+
+backend/
+├── app/
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── models/
+│   ├── schemas/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   └── tasks/
+
+---
+
+## 🖥 FRONTEND REQUIREMENTS
+
+### Tech Stack
+
+* React 18+
+* Tailwind CSS
+* Zustand or Redux Toolkit
+* Axios
+
+### FEATURES
+
+1. Upload Page:  Drag & drop, Multi-file upload, Progress tracking
+
+2. Dashboard: Project list, Status tracking
+
+3. Review/Edit Page: Editable table,  Highlight: Missing fields, Low confidence
+
+4. Project Details Page: Show extracted data, Validation, Download Excel
+
+---
+
+## 📁 FRONTEND STRUCTURE (STRICT)
+
+frontend/
+├── src/components/
+├── src/pages/
+├── src/services/
+├── src/store/
+├── src/hooks/
+├── src/utils/
+
+
+
+
+
+## 🎯 FINAL OUTPUT REQUIREMENT
+
+You MUST generate:
+
+✅ Full backend code (FastAPI)
+✅ Full frontend code (React)
+✅ AI extraction pipeline
+✅ Database models
+✅ API implementation
+✅ Excel generator
+✅ Auth system
+✅ Email integration
+✅ Notification system
+✅ Docker setup
+✅ Deployment instructions
+
+---
+
+## ⚠️ STRICT RULES
+
+* DO NOT give partial implementation
+* DO NOT skip modules
+* DO NOT simplify logic
+* WRITE production-level code
+* FOLLOW folder structure strictly
+* ENSURE code is runnable
+
+---
+
+
+## 🧠 BEHAVIOR
+
+Act like a **senior engineer delivering to a real client**.
+
+Think before coding.
+Design before implementing.
+Ensure robustness, scalability, and clarity.
+
+Your output should be **complete, structured, and deployment-ready**.

@@ -25,7 +25,7 @@ def fill_excel_template(template_path, output_path, data):
       C17 = Right eave height in m
       C18 = Ridge line distance  (has formula =C15/2, we overwrite)
       C19 = Roof slope
-      C20 = Left end wall bay spacing
+      C20 = Left end wall bay spacing(same as right side wall bay spacing)
       C21 = Right end wall bay spacing (has formula =C20, we overwrite)
       C22 = Side wall bay spacing
       C23 = Wall bracing type

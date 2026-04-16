@@ -35,7 +35,7 @@ PHASE 1: PROPOSAL ID CONSTRUCTION
 - The LOCATION is extracted separately from the document body (e.g., "Location: Palghar").
 - COMBINE them as: <ProposalID>-<Location>
   Example: Subject "Q-1516" + Location "Palghar" → proposal_id = "Q-1516-Palghar"
-- If no proposal ID found use "PROPOSAL". If no location found use "Site".
+
 
 ═══════════════════════════════════════════════════════
 PHASE 2: DATE EXTRACTION
@@ -59,8 +59,8 @@ PHASE 4: HEIGHT LOGIC
 Two height types:
   A) EAVE HEIGHT: Floor to top of eave (column top). Use directly.
   B) CLEAR HEIGHT: Usable interior clearance.
-     Eave Height = Clear Height + 0.5m (rafter) + 0.2m (purlin) = Clear Height + 0.7m
-     Example: 25 ft clear → 7.62m + 0.7m = 8.32m eave height
+     Eave Height = Clear Height + 1m (rafter+ purlin) = Clear Height + 1m
+     Example: 25 ft clear → 7.62m + 1m = 8.62m eave height
 
 ALWAYS record:
   - "height_type_given": "clear" or "eave"
@@ -70,7 +70,7 @@ ALWAYS record:
 ═══════════════════════════════════════════════════════
 PHASE 5: AREA CALCULATION
 ═══════════════════════════════════════════════════════
-  Area (sqm) = Length (m) × Width (m)  [make are area in full number ,calculated area = 464.51  , consider it as 465 ; plan area only, NOT L×W×H] 
+  Area (sqm) = Length (m) × Width (m)  [make are area in whole number ,calculated area = 464.51  , consider it as 465 plan area only, NOT L×W×H] 
 
 ═══════════════════════════════════════════════════════
 PHASE 6: STRUCTURAL APPLICATION
@@ -83,7 +83,7 @@ PHASE 7: DEFAULTS — Apply ONLY when client has NOT specified
 ═══════════════════════════════════════════════════════
 GENERAL:
   - design_code: "AISC" (use "IS" only if client specifically requests)
-  - building_type: "Clear Span" (Multi-Span only if width > 30m)
+  - building_type: "Clear Span" (Multi-Span only if width > 31m)
   - building_no: 1, option: 1, revision: 0, design_software: "MBS"
 
 LOADS:
@@ -100,8 +100,8 @@ GEOMETRY:
 
 SHEETING: roof_sheeting: "0.45mm aluzinc", wall_sheeting: "0.45mm aluzinc"
 DOORS: door_size: "3x3"
-ACCESSORIES: skylights/turbo_ventilators: 2/bay (15-30m span), 4/bay (>30m span)
-             braced bays: max 40m between them, max 5 bays
+ACCESSORIES: skylights/turbo_ventilators: 0
+             braced bays: 0
 CANOPY: present: false; slope: "10/100"; clear_top_height = door_height + 0.5m
 MEZZANINE: present: false unless mentioned
 CRANE: crane_count: 0; crane_class: "II (Normal duty)"; crane_type: "Top running"; girder_type: "Single"
