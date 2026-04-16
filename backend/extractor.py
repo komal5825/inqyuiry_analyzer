@@ -23,7 +23,7 @@ class PEBExtractor:
         print("DEBUG API KEY PRESENT:", bool(self.api_key))
 
     def get_system_prompt(self):
-        return """
+        base_prompt = """
 You are an expert Structural Engineering AI for Pre-Engineered Buildings (PEB) at Infiniti Structures.
 Your task is to perform a DEEP INTENT ANALYSIS of client inquiries and extract precise engineering specifications.
 
@@ -240,6 +240,24 @@ DO NOT include explanations.
 If you include anything other than JSON, the output will be rejected.
 """
 
+        rules_text = ""
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            rules_path = os.path.join(current_dir, "golden_rules.txt")
+            if os.path.exists(rules_path):
+                with open(rules_path, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                if content:
+                    rules_text = "\n\n═══════════════════════════════════════════════════════\n"
+                    rules_text += "PHASE 9: TEAM GOLDEN RULES (CRITICAL OVERRIDES)\n"
+                    rules_text += "═══════════════════════════════════════════════════════\n"
+                    rules_text += "The following rules are mandatory overrides based on past feedback:\n"
+                    rules_text += content + "\n"
+        except Exception as e:
+            print(f"DEBUG: Could not read golden_rules.txt: {e}")
+            
+        return base_prompt + rules_text
+
     def _strip_think_tags(self, text):
         """Gemini returns reasoning in <think> tags; remove before JSON parsing."""
         return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
@@ -268,6 +286,17 @@ If you include anything other than JSON, the output will be rejected.
       except Exception as e:
         print(f"DEBUG: JSON parsing failed: {e}")
         return None
+    def _generate_with_fallback(self, contents):
+        """Helper to try primary model, then fallback on failure (e.g., High Demand)."""
+        try:
+            return self.client.models.generate_content(model=self.model_id, contents=contents)
+        except Exception as primary_e:
+            print(f"DEBUG: Primary model {self.model_id} failed: {primary_e}. Trying fallback 'gemini-1.5-flash'...")
+            try:
+                return self.client.models.generate_content(model="gemini-1.5-flash", contents=contents)
+            except Exception as fallback_e:
+                print(f"DEBUG: Fallback model also failed: {fallback_e}")
+                raise fallback_e
 
     def extract_from_image(self, image_path):
       try:
@@ -280,8 +309,7 @@ If you include anything other than JSON, the output will be rejected.
         Analyze this PEB drawing/image and extract all details.
         """
 
-        response = self.client.models.generate_content(
-          model = self.model_id, conetnt = [prompt, image])
+        response = self._generate_with_fallback(contents=[prompt, image])
 
         full_response = response.text
         print("FULL GEMINI IMAGE RESPONSE:\n", full_response[:10000])
@@ -354,9 +382,7 @@ If you include anything other than JSON, the output will be rejected.
         INPUT:
         {text}
         """
-        response = self.client.models.generate_content(
-          model = self.model_id,
-          contents = prompt)
+        response = self._generate_with_fallback(contents=prompt)
         full_response = response.text
         print("FULL GEMINI RESPONSE:\n", full_response[:10000])
         result = self._parse_json_response(full_response)

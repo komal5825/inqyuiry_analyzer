@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Elements: Upload / Main
     const analyzeBtn = document.getElementById('analyze-btn');
     const uploadSection = document.getElementById('upload-section');
     const processingSection = document.getElementById('processing-section');
@@ -6,19 +7,68 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataDisplay = document.getElementById('data-display');
     const generateBtn = document.getElementById('generate-btn');
     const downloadArea = document.getElementById('download-area');
-    const downloadLink = document.getElementById('download-link');
-    const progressBar = document.getElementById('progress-bar');
-    
     const fileInput = document.getElementById('file-input');
     const dropZone = document.getElementById('drop-zone');
     const textInput = document.getElementById('text-input');
+    const selectionStatus = document.getElementById('selection-status');
+    const progressBar = document.getElementById('progress-bar');
+    const projectList = document.getElementById('project-list');
+
+    // Elements: Settings & Rules
+    const customApiKeyInput = document.getElementById('custom-api-key');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const ruleModal = document.getElementById('rule-modal');
+    const addRuleBtn = document.getElementById('add-rule-modal-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const submitRuleBtn = document.getElementById('submit-rule-btn');
+    const ruleInput = document.getElementById('rule-input');
+    const ruleStatus = document.getElementById('rule-status');
 
     let currentInquiryId = null;
-    let currentData = null;
+    let currentData = null; // Holds the nested JSON
 
-    // UI Interaction
-    const selectionStatus = document.getElementById('selection-status');
+    // Optional API Key save feedback
+    saveSettingsBtn.addEventListener('click', () => {
+        saveSettingsBtn.innerHTML = "✅";
+        saveSettingsBtn.style.color = "lightgreen";
+        setTimeout(() => { 
+            saveSettingsBtn.innerHTML = "⚙️"; 
+            saveSettingsBtn.style.color = ""; 
+        }, 2000);
+    });
 
+    // Modal Logic
+    addRuleBtn.addEventListener('click', () => {
+        ruleModal.classList.remove('hidden');
+        ruleStatus.classList.add('hidden');
+        ruleInput.value = '';
+    });
+    closeModalBtn.addEventListener('click', () => ruleModal.classList.add('hidden'));
+
+    submitRuleBtn.addEventListener('click', async () => {
+        const ruleText = ruleInput.value.trim();
+        if(!ruleText) return;
+
+        submitRuleBtn.innerText = "Saving...";
+        try {
+            const formData = new FormData();
+            formData.append('rule', ruleText);
+            const response = await fetch('/add_rule', { method: 'POST', body: formData });
+            if(response.ok) {
+                ruleStatus.innerHTML = "✅ Rule added successfully to AI memory!";
+                ruleStatus.classList.remove('hidden');
+                ruleStatus.style.color = "lightgreen";
+                setTimeout(() => ruleModal.classList.add('hidden'), 1500);
+            }
+        } catch (e) {
+            ruleStatus.innerHTML = "❌ Failed to save rule.";
+            ruleStatus.classList.remove('hidden');
+            ruleStatus.style.color = "red";
+        }
+        submitRuleBtn.innerText = "Save to Rulebook";
+    });
+
+    // File Drag/Drop
     function handleFileSelection(file) {
         if (file) {
             selectionStatus.innerHTML = `📄 File Ready: <b>${file.name}</b>`;
@@ -29,70 +79,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     dropZone.addEventListener('click', () => fileInput.click());
-    
-    fileInput.addEventListener('change', () => {
-        handleFileSelection(fileInput.files[0]);
-    });
-
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#06b6d4';
-    });
+    fileInput.addEventListener('change', () => handleFileSelection(fileInput.files[0]));
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#06b6d4'; });
     dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = 'rgba(255,255,255,0.1)');
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        fileInput.files = e.dataTransfer.files;
-        handleFileSelection(fileInput.files[0]);
-    });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); fileInput.files = e.dataTransfer.files; handleFileSelection(fileInput.files[0]); });
 
+    // Extraction Flow
     analyzeBtn.addEventListener('click', async () => {
         const formData = new FormData();
         if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
         if (textInput.value) formData.append('text', textInput.value);
+        if (customApiKeyInput.value) formData.append('api_key', customApiKeyInput.value);
 
         if (!fileInput.files[0] && !textInput.value) {
             alert('Please provide a file or text inquiry.');
             return;
         }
 
-        // Transition to Processing
         uploadSection.classList.add('hidden');
         processingSection.classList.remove('hidden');
-        updateProgress(33, 'step-extracting');
+        progressBar.style.width = '50%';
 
         try {
-            const response = await fetch('/analyze', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await fetch('/analyze', { method: 'POST', body: formData });
             const result = await response.json();
             
-            // Show Upload Success Feedback
-            const statusBadge = document.getElementById('upload-status');
-            statusBadge.innerHTML = `✅ Successfully uploaded: <b>${result.upload_feedback.name}</b> (${result.upload_feedback.type})`;
-            statusBadge.classList.remove('hidden');
+            if (result.error) throw new Error(result.error);
 
-            updateProgress(66, 'step-analyzing');
+            progressBar.style.width = '100%';
             
-            // Artificial delay for premium feel
+            // Add to sidebar history
+            const projName = result.data.proposal_id || (fileInput.files[0] ? fileInput.files[0].name : 'Text Inquiry');
+            addToHistory(projName);
+
             setTimeout(() => {
-                updateProgress(100, 'step-finalizing');
-                setTimeout(() => {
-                    displayResults(result.id, result.data);
-                }, 800);
-            }, 1000);
+                displayResults(result.id, result.data);
+            }, 800);
 
         } catch (error) {
-            alert('Analysis failed. Please check your API connection.');
+            console.error(error);
+            alert('Analysis failed. Check your API key or connection. ' + error.message);
             uploadSection.classList.remove('hidden');
             processingSection.classList.add('hidden');
         }
     });
 
-    function updateProgress(percent, stepId) {
-        progressBar.style.width = percent + '%';
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(stepId).classList.add('active');
+    function addToHistory(name) {
+        const emptyState = projectList.querySelector('.empty');
+        if(emptyState) emptyState.remove();
+        
+        const item = document.createElement('div');
+        item.className = 'project-item active';
+        item.innerText = name;
+        
+        // Remove active from others
+        projectList.querySelectorAll('.project-item').forEach(i => i.classList.remove('active'));
+        projectList.prepend(item);
     }
 
     function displayResults(id, data) {
@@ -100,40 +142,86 @@ document.addEventListener('DOMContentLoaded', () => {
         currentData = data;
         
         processingSection.classList.add('hidden');
+        downloadArea.classList.add('hidden');
         resultSection.classList.remove('hidden');
         
-        renderDataCards(data);
+        renderDataForm(data);
     }
 
-    function renderDataCards(data) {
+    // Dynamic rendering of nested JSON object
+    function renderDataForm(data) {
         dataDisplay.innerHTML = '';
-        // Show key parameters
-        // Show key parameters - Expanded for Deep Intent Analysis
-        const keysToShow = [
-            'proposal_id', 'date', 'length', 'width', 'height', 
-            'location', 'project', 'mezzanine_height', 'crane_count', 
-            'area', 'side_bay', 'end_bay'
-        ];
-        
-        keysToShow.forEach(key => {
-            const card = document.createElement('div');
-            card.className = 'data-card';
-            card.innerHTML = `
-                <div class="label">${key.replace('_', ' ')}</div>
-                <input type="text" class="value-input" data-key="${key}" value="${data[key]}">
-            `;
-            dataDisplay.appendChild(card);
+
+        Object.keys(data).forEach(key => {
+            const val = data[key];
+            if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+                // Section (e.g. dimensions, loads)
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'form-section';
+                sectionDiv.innerHTML = `<h3>${formatLabel(key)}</h3>`;
+                
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'section-grid';
+                
+                Object.keys(val).forEach(subKey => {
+                    gridDiv.appendChild(createInputCard(key, subKey, val[subKey]));
+                });
+                
+                sectionDiv.appendChild(gridDiv);
+                dataDisplay.appendChild(sectionDiv);
+            } else {
+                // Top level field (e.g. proposal_id)
+                if(!dataDisplay.querySelector('.top-level-grid')) {
+                    const topGrid = document.createElement('div');
+                    topGrid.className = 'section-grid top-level-grid';
+                    dataDisplay.appendChild(topGrid);
+                }
+                dataDisplay.querySelector('.top-level-grid').appendChild(createInputCard(null, key, val));
+            }
         });
     }
 
+    function createInputCard(parentKey, key, value) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-group';
+        
+        const labelText = formatLabel(key);
+        const dataPath = parentKey ? `${parentKey}.${key}` : key;
+        
+        wrapper.innerHTML = `
+            <label>${labelText}</label>
+            <input type="${typeof value === 'number' ? 'number' : 'text'}" 
+                   class="dynamic-input" 
+                   data-path="${dataPath}" 
+                   value="${value !== null ? value : ''}">
+        `;
+        return wrapper;
+    }
+
+    function formatLabel(str) {
+        return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // Dynamic Saving
     generateBtn.addEventListener('click', async () => {
-        // Collect edited values
-        const inputs = document.querySelectorAll('.value-input');
+        generateBtn.innerText = "Generating...";
+        
+        // Update currentData from inputs using data-path
+        const inputs = document.querySelectorAll('.dynamic-input');
         inputs.forEach(input => {
-            const key = input.getAttribute('data-key');
-            currentData[key] = input.value;
+            const path = input.getAttribute('data-path').split('.');
+            let val = input.value;
+            // Parse numbers if needed
+            if (input.type === 'number' && val !== '') val = parseFloat(val);
+
+            if (path.length === 1) {
+                currentData[path[0]] = val;
+            } else {
+                currentData[path[0]][path[1]] = val;
+            }
         });
 
+        // Send modified data to backend
         const response = await fetch(`/generate/${currentInquiryId}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -141,8 +229,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         const result = await response.json();
-        downloadLink.href = result.download_url;
+        
+        // Convert base64 to blob and auto-download
+        const binaryString = window.atob(result.file_data_base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+        const url = URL.createObjectURL(blob);
+        
         downloadArea.classList.remove('hidden');
-        downloadArea.scrollIntoView({behavior: 'smooth'});
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = result.filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        
+        generateBtn.innerText = "Approve & Download Excel";
     });
 });

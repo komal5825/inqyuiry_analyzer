@@ -1,0 +1,8 @@
+- Example Rule 1: Always ensure that if clear height is mentioned, 1m is added to get eave height.
+- Example Rule 2: If the structural application is 'Cold Storage', please double check insulation requirements if provided.
+
+(Add your rules here. They will automatically be injected into the AI's system prompt.)
+- calculate area in whole number ,calculated area = 464.51  , consider it as 465 plan area only, NOT L×W×H
+- make sure u will convert the feet into meters
+- brick wall should br a whole number 
+- if width is more than 31 m then it will multispan building type

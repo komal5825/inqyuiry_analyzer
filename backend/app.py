@@ -2,6 +2,7 @@ import os
 import shutil
 import uuid
 import re
+import base64
 from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -58,6 +59,7 @@ async def read_index():
 async def analyze_inquiry(
     file: UploadFile = File(None),
     text: str = Form(None),
+    api_key: str = Form(None),
     db: Session = Depends(get_db)
 ):
     db_inquiry = Inquiry(status="Extracting")
@@ -66,9 +68,12 @@ async def analyze_inquiry(
     db.refresh(db_inquiry)
 
     # Switched back to Gemini for high-precision extraction
-    api_key = os.getenv("GEMINI_API_KEY")
-    print(f"DEBUG: Analyze requested. Gemini API Key Present: {bool(api_key)}")
-    extractor = PEBExtractor(api_key=api_key)
+    final_api_key = api_key if api_key else os.getenv("GEMINI_API_KEY")
+    print(f"DEBUG: Analyze requested. Gemini API Key Present: {bool(final_api_key)}")
+    try:
+        extractor = PEBExtractor(api_key=final_api_key)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Missing API Key. Please provide one in the Settings.")
 
     temp_path = None
     raw_data = {}
@@ -152,7 +157,24 @@ async def generate_excel(inquiry_id: int, verified_data: dict, db: Session = Dep
 
     fill_excel_template(TEMPLATE_PATH, output_path, verified_data)
 
-    return {"download_url": f"/download/{inquiry_id}/{output_filename}"}
+    # Read the file and convert to base64 for direct frontend download
+    with open(output_path, "rb") as f:
+        file_bytes = f.read()
+    b64_data = base64.b64encode(file_bytes).decode('utf-8')
+
+    return {"filename": output_filename, "file_data_base64": b64_data}
+
+@app.post("/add_rule")
+async def add_golden_rule(rule: str = Form(...)):
+    rule_path = os.path.join(BASE_DIR, "golden_rules.txt")
+    try:
+        # Create file if it doesn't exist, else append
+        mode = "a" if os.path.exists(rule_path) else "w"
+        with open(rule_path, mode, encoding="utf-8") as f:
+            f.write(f"\n- {rule.strip()}")
+        return {"status": "success", "message": "Rule added"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/download/{inquiry_id}/{filename}")

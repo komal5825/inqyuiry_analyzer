@@ -3,79 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InquireAnti | PEB Strategy Agent</title>
-    <link rel="stylesheet" href="static/style.css?v=1.1">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>InquireAnti | Admin Dashboard</title>
+    <link rel="stylesheet" href="static/style.css?v=2.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="background-blur"></div>
     
-    <header>
-        <div class="logo">INQUIRE<span>ANTI</span></div>
-        <div class="tagline">Advanced PEB Specification Agent</div>
-    </header>
+    <!-- Top Navigation -->
+    <nav class="top-nav glass-panel">
+        <div class="logo">INQUIRE<span>ANTI</span> <span class="badge">ADMIN</span></div>
+        <div class="settings">
+            <span class="label">API Key Override:</span>
+            <input type="password" id="custom-api-key" placeholder="Optional Custom Gemini Key">
+            <button id="save-settings-btn" title="Save Key for Session">⚙️</button>
+        </div>
+    </nav>
 
-    <main>
-        <section id="upload-section" class="glass-container">
-            <h1>Automated Requirement Analysis</h1>
-            <p>Upload drawings, specs, or paste inquiry emails to begin extraction.</p>
+    <div class="dashboard-layout">
+        <!-- Left Sidebar -->
+        <aside class="sidebar glass-panel">
+            <h3>Recent Projects</h3>
+            <div id="project-list" class="project-list">
+                <div class="project-item empty">No history yet...</div>
+            </div>
             
-            <div class="upload-wrapper">
-                <div id="drop-zone" class="drop-zone">
-                    <div class="icon">📤</div>
-                    <p>Drag & Drop files here or <span>Browse</span></p>
-                    <input type="file" id="file-input" hidden>
+            <div class="sidebar-actions">
+                <button id="add-rule-modal-btn" class="btn-secondary">🧠 Add AI Golden Rule</button>
+            </div>
+        </aside>
+
+        <!-- Right Main Canvas -->
+        <main class="main-content">
+            <!-- Phase 1: Upload -->
+            <section id="upload-section" class="glass-panel main-panel">
+                <h1>Automated Extraction</h1>
+                <p>Upload a specification PDF or paste an inquiry email.</p>
+                
+                <div class="upload-wrapper">
+                    <div id="drop-zone" class="drop-zone">
+                        <div class="icon">📤</div>
+                        <p>Drag & Drop files here or <span>Browse</span></p>
+                        <input type="file" id="file-input" hidden>
+                    </div>
+                    
+                    <div class="divider"><span>OR</span></div>
+                    
+                    <textarea id="text-input" placeholder="Paste inquiry email text here..."></textarea>
                 </div>
                 
-                <div class="divider"><span>OR</span></div>
+                <div id="selection-status" class="hidden selection-badge"></div>
+                <button id="analyze-btn" class="btn-primary" style="margin-top: 15px; width: 100%;">Extract Specifications</button>
+            </section>
+
+            <!-- Phase 2: Processing -->
+            <section id="processing-section" class="glass-panel main-panel hidden">
+                <div id="upload-status" class="hidden status-badge"></div>
+                <h2>Analyzing Infrastructure...</h2>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <p>Applying Golden Rules and reasoning...</p>
+            </section>
+
+            <!-- Phase 3: Results / Form -->
+            <section id="result-section" class="glass-panel main-panel hidden">
+                <div class="result-header">
+                    <h2>Client Specifications</h2>
+                    <div class="actions">
+                        <button id="generate-btn" class="btn-primary">Approve & Download Excel</button>
+                    </div>
+                </div>
                 
-                <textarea id="text-input" placeholder="Paste inquiry email text here..."></textarea>
-            </div>
-            
-            <div id="selection-status" class="hidden selection-badge"></div>
-            
-            <button id="analyze-btn" class="btn-primary">Analyze Specifications</button>
-        </section>
-
-        <section id="processing-section" class="glass-container hidden">
-            <div id="upload-status" class="hidden status-badge"></div>
-            <h2 id="status-title">Analyzing Infrastructure...</h2>
-            <div class="progress-bar-container">
-                <div id="progress-bar" class="progress-bar"></div>
-            </div>
-            <div class="status-steps">
-                <div class="step active" id="step-extracting">Extraction</div>
-                <div class="step" id="step-analyzing">Logic Processing</div>
-                <div class="step" id="step-finalizing">Finalizing</div>
-            </div>
-        </section>
-
-        <section id="result-section" class="glass-container hidden">
-            <div class="result-header">
-                <h2>Extracted Specifications</h2>
-                <div class="actions">
-                    <button id="edit-btn" class="btn-secondary">Edit Mode</button>
-                    <button id="generate-btn" class="btn-primary">Generate Final Excel</button>
+                <div id="download-area" class="hidden success-banner">
+                    Excel Specification Ready! Check your downloads.
                 </div>
-            </div>
-            
-            <div class="data-grid" id="data-display">
-                <!-- Parameters will be injected here -->
-            </div>
-            
-            <div id="download-area" class="hidden">
-                <div class="success-card">
-                    <h3>Excel Specification Ready!</h3>
-                    <a id="download-link" href="#" class="btn-download">Download .xlsx</a>
+
+                <!-- Dynamically generated nested JSON map -->
+                <div class="form-container" id="data-display">
+                    <!-- Javascript will inject sections here -->
                 </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Golden Rule Modal -->
+    <div id="rule-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <h2>Add an AI Golden Rule</h2>
+            <p>Teach the extractor how to handle edge cases or fix past mistakes. This rule applies immediately to all future extractions.</p>
+            <textarea id="rule-input" placeholder="- For 'Clear Span', ignore column requirements..."></textarea>
+            <div class="modal-actions">
+                <button id="close-modal-btn" class="btn-text">Cancel</button>
+                <button id="submit-rule-btn" class="btn-primary">Save to Rulebook</button>
             </div>
-        </section>
-    </main>
+            <div id="rule-status" class="hidden"></div>
+        </div>
+    </div>
 
-    <footer>
-        <p>&copy; 2026 InquireAnti AI. Built for PEB Precision.</p>
-    </footer>
-
-    <script src="static/script.js?v=1.1"></script>
+    <script src="static/script.js?v=2.0"></script>
 </body>
 </html>

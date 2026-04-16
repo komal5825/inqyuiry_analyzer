@@ -1,0 +1,66 @@
+# Full-Stack Deployment and Security Report
+
+This report addresses your questions regarding deploying the "Inquire Anti" application, implementing access controls, managing your Gemini API key, and understanding the overall deployment process for a beginner.
+
+## 1. Access Control: Before or After Deployment?
+
+> [!IMPORTANT]
+> **You should implement access control BEFORE you deploy.**
+
+Since this application is intended only for your internal design team and specific users (like the MCC list), deploying it without access control means anyone on the internet who finds your link could use it. This risks data exposure and could rapidly drain your Gemini API limits. 
+
+**Recommended Workflow:**
+1. **Develop Locally:** Build the login/authentication system (e.g., using JWT tokens in FastAPI and a login page in React).
+2. **Test Locally:** Ensure only authorized users can access the dashboard.
+3. **Deploy:** Deploy the application with the security rules already in place.
+
+## 2. Using the Free Tier Gemini API Key for Deployment
+
+> [!WARNING]
+> **Is it safe to use the free tier? Yes, but with significant caveats.**
+
+It is technically perfectly fine to deploy using your free Gemini API key, but you must be aware of two major limitations:
+
+### A. Rate Limits
+The free tier has strict usage limits (e.g., 15 Requests Per Minute, 1500 Requests Per Day). If your design team processes many specification files simultaneously, the application will crash or return errors because Google will block the requests for exceeding the limit.
+- **How long will it last?** It will last forever, but it will throttle everyday if you hit the daily/minute caps.
+
+### B. Data Privacy (Crucial)
+When using the **Free Tier** in Google AI Studio, Google may use your prompts and data to train their future AI models. If your client specifications contain sensitive, proprietary, or confidential data, using the free tier poses a privacy risk.
+
+### Alternatives
+- **Google Cloud Vertex AI (Recommended Alternative):** You mentioned you don't have paid access. However, if you sign up for Google Cloud Platform (GCP), they offer **$300 in free credits** for the first 90 days. Vertex AI offers the same models, but with strict enterprise privacy (data is *not* used for training) and higher rate limits. Once your app proves its value, the business can attach a billing account to pay exactly for what is used (Pay-As-You-Go is often very cheap for text processing).
+
+## 3. Where is the Gemini API Consumed in Your Project?
+
+Your Gemini API is currently correctly consumed purely in the **Backend**.
+
+- **File Location:** `backend/extractor.py`
+- **How it works:** In the `PEBExtractor` class, the application pulls the `GEMINI_API_KEY` from your environment variables (`.env` file) and uses it to authenticate the `google.genai` client.
+- **Security Check:** This is the safest way to do it. Your frontend (React) never sees the API key. When you deploy, you will **never** upload your `.env` file. Instead, your hosting provider will have a designated "Secrets" or "Environment Variables" section where you securely paste your API key.
+
+## 4. General Deployment Guide for Beginners
+
+Deploying a full-stack application (FastAPI backend + React frontend) means moving your code from your local computer to a server that runs 24/7.
+
+Here is the general approach:
+
+### Step 1: Prepare the Frontend
+- Your React frontend will be built into static files (`npm run build`).
+- **Where to host:** **Vercel** or **Netlify**. These platforms are free, highly optimized for React, and very easy to use (you just connect your GitHub repository, and they handle the rest).
+
+### Step 2: Prepare the Backend
+- Your FastAPI backend needs a server to run Python.
+- **Where to host:** **Render.com** or **Railway.app**. Both offer easy deployment for Python web services and have free tiers (though free tiers sleep when inactive, so the first request might take a few seconds to load).
+- **Environment Variables:** In the Render/Railway dashboard, you will add your `GEMINI_API_KEY` in their settings menu. 
+
+### Step 3: Connect Frontend to Backend
+- Your frontend currently probably points to `http://localhost:8000`. Once your backend is deployed, it will have a public URL (e.g., `https://inquire-anti-backend.onrender.com`).
+- You will update your frontend environment variables to point to this new live URL before you deploy the frontend.
+
+### Summary Checklist for Your Team
+1. Code a simple login screen and restrict access to the MCC list.
+2. Push all code to a private GitHub repository.
+3. Deploy the Backend to Render or Railway (add Gemini key directly to their dashboard).
+4. Deploy the Frontend to Vercel (add the new live Backend URL to its settings).
+5. (Optional but recommended) Transition to a Pay-As-You-Go tier or GCP Vertex AI if the free limits cause errors for the design team.
